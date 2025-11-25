@@ -1,80 +1,202 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Bench Scene — Background with Floating Images</title>
-<meta name="description" content="Simple page: dimmed background image, bench centered, floating images with varying opacities" />
-<!--
-INSTRUCTIONS:
-1) Replace the image filenames below with the files you upload to the repository root (or update paths):
-- background.jpg (wide photo for the page background)
-- bench.png (transparent PNG or SVG of the bench to place in the centre)
-- float1.png .. float6.png (floating images)
-2) Commit this file and your images to your GitHub repository (root). Enable GitHub Pages (Settings -> Pages -> choose branch, usually `main` and root).
-3) Tweak sizes, opacity values and animation settings as desired.
--->
-<style>
-:root{
---bg-image: url('background.jpg'); /* replace with your background image */
---bench-width: clamp(220px, 30vw, 520px); /* bench size scales with viewport */
---overlay: rgba(0,0,0,0.35); /* darkness over background */
---float-max-scale: 1.15;
---float-min-scale: 0.6;
-}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bench Scene — Background with Floating Images</title>
+  <meta name="description" content="Simple page: dimmed background image, bench centered, floating images with varying opacities" />
+  <!--
+    INSTRUCTIONS:
+    1) Replace the image filenames below with the files you upload to the repository root (or update paths):
+       - background.jpg  (wide photo for the page background)
+       - bench.png       (transparent PNG or SVG of the bench to place in the centre)
+       - float1.png .. float6.png  (floating images)
+    2) Commit this file and your images to your GitHub repository (root). Enable GitHub Pages (Settings -> Pages -> choose branch, usually `main` and root).
+    3) Tweak sizes, opacity values and animation settings as desired.
+  -->
+  <style>
+    :root{
+      --bg-image: url('hills.jpg'); /* replace with your background image */
+      --bench-width: clamp(220px, 30vw, 520px); /* bench size scales with viewport */
+      --overlay: rgba(0,0,0,0.35); /* darkness over background */
+      --float-max-scale: 1.15;
+      --float-min-scale: 0.6;
+    }
 
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{
+      min-height:100vh;
+      background: var(--overlay), center/cover no-repeat var(--bg-image);
+      background-blend-mode: overlay;
+      overflow:hidden; /* prevent scrollbars from floating images moving slightly */
+      display:flex;align-items:center;justify-content:center;
+    }
 
-html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
-body{
-min-height:100vh;
-background: var(--overlay), center/cover no-repeat var(--bg-image);
-background-blend-mode: overlay;
-overflow:hidden; /* prevent scrollbars from floating images moving slightly */
-display:flex;align-items:center;justify-content:center;
-}
+    /* Scene wrapper to control stacking context */
+    .scene{
+      position:relative;
+      width:100%;height:100%;
+      max-width:1600px; /* optional: keep things tidy on very wide screens */
+      margin:0 auto;
+    }
 
+    /* Floating images container (behind the bench) */
+    .floaters{
+      position:absolute;inset:0;pointer-events:none;z-index:5;
+    }
 
-/* Scene wrapper to control stacking context */
-.scene{
-position:relative;
-width:100%;height:100%;
-max-width:1600px; /* optional: keep things tidy on very wide screens */
-margin:0 auto;
-}
+    .floater{
+      position:absolute;max-width:20vw; /* will be adjusted by JS */
+      min-width:48px;
+      transform-origin:center center;
+      will-change:transform,opacity,left,top;
+      user-select:none;
+      transition:opacity .6s ease, transform .6s ease;
+      filter: drop-shadow(0 6px 18px rgba(0,0,0,0.25));
+      z-index:6;
+    }
 
+    /* Bench in the centre */
+    .bench{
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      width:var(--bench-width);max-width:85vw;height:auto;z-index:20;pointer-events:none;
+    }
 
-/* Floating images container (behind the bench) */
-.floaters{
-position:absolute;inset:0;pointer-events:none;z-index:5;
-}
+    /* subtle parallax-style animation using keyframes; timing adjusted via JS */
+    @keyframes float-vertical{
+      0%{transform:translateY(0) translateX(0)}
+      50%{transform:translateY(-18px) translateX(6px)}
+      100%{transform:translateY(0) translateX(-6px)}
+    }
 
+    /* small responsive adjustments */
+    @media (max-width:600px){
+      :root{--bench-width:60vw}
+      .floater{max-width:28vw}
+    }
+    .character{
+      position:absolute;
+      left:50%;top:50%;
+      transform:translate(-50%,-125%);
+      width:clamp(120px,20vw,260px);
+      height:auto;
+      z-index:25;
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body>
+  <div class="scene" id="scene">
+    <div class="floaters" id="floaters">
+      <!-- Replace src attributes with your uploaded float images -->
+      <img class="floater" src="face1.jpg" alt="floating image 1" data-base-opacity="0.55">
+      <img class="floater" src="face2.jpg" alt="floating image 2" data-base-opacity="0.35">
+      <img class="floater" src="face3.jpg" alt="floating image 3" data-base-opacity="0.25">
+      <img class="floater" src="face4.jpg" alt="floating image 4" data-base-opacity="0.45">
+      <img class="floater" src="face5.jpg" alt="floating image 5" data-base-opacity="0.30">
+      <img class="floater" src="face6.jpg" alt="floating image 6" data-base-opacity="0.20">
+    </div>
 
-.floater{
-position:absolute;max-width:20vw; /* will be adjusted by JS */
-min-width:48px;
-transform-origin:center center;
-will-change:transform,opacity,left,top;
-user-select:none;
-transition:opacity .6s ease, transform .6s ease;
-filter: drop-shadow(0 6px 18px rgba(0,0,0,0.25));
-z-index:6;
-}
+    <!-- Character sitting on the bench -->
+    <img class="character" src="death13.jpg" alt="character on bench">
 
+    <!-- Bench should be visually centered; use a PNG or SVG with transparent background for best result -->
+    <img class="bench" id="bench" src="bench.png" alt="bench">
+  </div>
 
-/* Bench in the centre */
-.bench{
-position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-width:var(--bench-width);max-width:85vw;height:auto;z-index:20;pointer-events:none;
-}
+  <script>
+    // Small script to randomize positions, opacities and animation durations of the floating images.
+    // It keeps the bench centered and ensures floats stay partly behind/around the bench.
 
+    (function(){
+      const scene = document.getElementById('scene');
+      const floaters = Array.from(document.querySelectorAll('.floater'));
+      const bench = document.getElementById('bench');
 
-/* subtle parallax-style animation using keyframes; timing adjusted via JS */
-@keyframes float-vertical{
-0%{transform:translateY(0) translateX(0)}
-50%{transform:translateY(-18px) translateX(6px)}
-100%{transform:translateY(0) translateX(-6px)}
-}
+      // Where floats will be placed relative to the scene bounds (inset margins)
+      const margin = 6; // percent inset from edges
 
+      // Helper: return random number between min and max
+      const rand = (min, max) => Math.random()*(max-min)+min;
 
-/* small responsive adjustments */
+      function placeFloaters(){
+        const rect = scene.getBoundingClientRect();
+        const w = rect.width, h = rect.height;
+
+        // Bench center to avoid placing floats covering it completely
+        const benchRect = bench.getBoundingClientRect();
+        const benchCx = benchRect.left + benchRect.width/2 - rect.left;
+        const benchCy = benchRect.top + benchRect.height/2 - rect.top;
+        const avoidRadius = Math.max(benchRect.width, benchRect.height) * 0.9;
+
+        floaters.forEach((el, i) => {
+          // size: scale floats by viewport width but give variety
+          const vw = Math.max(window.innerWidth, 320);
+          const sizeFactor = rand(0.6, 1.0);
+          el.style.maxWidth = (12*sizeFactor) + 'vw';
+
+          // base opacity from data attribute, modulated slightly
+          const baseO = parseFloat(el.dataset.baseOpacity) || 0.45;
+          el.style.opacity = (baseO * rand(0.75, 1.05)).toFixed(2);
+
+          // random position, but avoid placing directly over bench center
+          let x = rand(margin, 100-margin); // percent
+          let y = rand(margin, 100-margin);
+
+          // convert to pixels and re-roll if too close to bench center
+          let px = (x/100)*w, py = (y/100)*h;
+          const dx = px - benchCx, dy = py - benchCy;
+          if (Math.hypot(dx,dy) < avoidRadius) {
+            // push it further out along the vector
+            const angle = Math.atan2(dy || 0.0001, dx || 0.0001);
+            px = benchCx + Math.cos(angle) * (avoidRadius + rand(20,120));
+            py = benchCy + Math.sin(angle) * (avoidRadius + rand(20,120));
+            // clamp inside scene
+            px = Math.max(10, Math.min(w-10, px));
+            py = Math.max(10, Math.min(h-10, py));
+            x = (px/w)*100; y = (py/h)*100;
+          }
+
+          el.style.left = x+'%';
+          el.style.top = y+'%';
+
+          // slightly rotate & scale
+          const rot = rand(-18,18);
+          const scale = rand(0.7, 1.05);
+          el.style.transform = `translate(-50%,-50%) rotate(${rot}deg) scale(${scale})`;
+
+          // animation duration & delay
+          const dur = rand(6, 18);
+          const delay = rand(-4, 4);
+          el.style.animation = `float-vertical ${dur}s ease-in-out ${delay}s infinite alternate`;
+
+          // subtle z-index ordering to create depth depending on vertical position
+          const z = Math.floor((y/100)*50) + 5;
+          el.style.zIndex = z;
+        });
+      }
+
+      // Re-position floats on load and on resize/orientation change
+      window.addEventListener('load', ()=>{
+        // if bench hasn't loaded size yet, wait a tick
+        setTimeout(placeFloaters, 60);
+      });
+      window.addEventListener('resize', ()=>{
+        // throttle
+        clearTimeout(window._floaterResize);
+        window._floaterResize = setTimeout(placeFloaters, 120);
+      });
+
+      // Allow keyboard accessibility: pressing 'f' toggles visibility of floats (for testing)
+      document.addEventListener('keydown', (e)=>{
+        if(e.key.toLowerCase() === 'f'){
+          floaters.forEach(el=> el.style.opacity = (el.style.opacity == '0' ? '' : '0'));
+        }
+      });
+
+      // Expose a small helper for future programmatic updates
+      window.__benchScene = { placeFloaters };
+    })();
+  </script>
+</body>
 </html>
